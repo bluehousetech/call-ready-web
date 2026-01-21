@@ -30,10 +30,10 @@ export default function TryItNowPage() {
                 </svg>
               </div>
               <a
-                href="tel:+1234567890"
+                href="tel:+13369625287"
                 className="text-5xl md:text-6xl font-bold text-primary-500 hover:text-primary-600 transition-colors"
               >
-                (XXX) XXX-XXXX
+                (336) 962-5287
               </a>
               <p className="text-sm text-gray-500 mt-4">Click to call on mobile</p>
             </div>
@@ -336,8 +336,8 @@ export default function TryItNowPage() {
                   </div>
                   <div>
                     <p className="font-semibold text-dark-500 mb-1">Call Us</p>
-                    <a href="tel:+1234567890" className="text-primary-500 hover:text-primary-600">
-                      (XXX) XXX-XXXX
+                    <a href="tel:+13369625287" className="text-primary-500 hover:text-primary-600">
+                      (336) 962-5287
                     </a>
                   </div>
                   <div>
