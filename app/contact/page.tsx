@@ -1,17 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
-    business: "",
+    orgName: "",
     message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
@@ -24,19 +26,43 @@ export default function ContactPage() {
     e.preventDefault();
     setIsSubmitting(true);
     setSubmitMessage("");
+    setIsSuccess(false);
 
-    // Simulate form submission (replace with actual API call)
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      if (!res.ok) {
+        let msg = "Something went wrong. Please try again or call us.";
+        try {
+          const j = (await res.json()) as unknown;
+          if (j && typeof j === "object" && "error" in j && typeof (j as { error?: unknown }).error === "string") {
+            msg = (j as { error: string }).error;
+          }
+        } catch {
+          // ignore non-JSON responses
+        }
+        setSubmitMessage(msg);
+        return;
+      }
+
+      setIsSuccess(true);
       setSubmitMessage("Thank you for your message! We'll get back to you within 24 hours.");
       setFormData({
         name: "",
         email: "",
         phone: "",
-        business: "",
+        orgName: "",
         message: "",
       });
-    }, 1000);
+    } catch {
+      setSubmitMessage("Network error. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -60,104 +86,139 @@ export default function ContactPage() {
             {/* Contact Form */}
             <div>
               <h2 className="heading-sm text-dark-500 mb-6">Send Us a Message</h2>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                    Your Name *
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    required
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
-                    placeholder="John Smith"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address *
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    required
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
-                    placeholder="john@example.com"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone Number *
-                  </label>
-                  <input
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    required
-                    value={formData.phone}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
-                    placeholder="(555) 123-4567"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="business" className="block text-sm font-medium text-gray-700 mb-2">
-                    Business Name
-                  </label>
-                  <input
-                    type="text"
-                    id="business"
-                    name="business"
-                    value={formData.business}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
-                    placeholder="Smith Plumbing LLC"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-                    Message *
-                  </label>
-                  <textarea
-                    id="message"
-                    name="message"
-                    required
-                    value={formData.message}
-                    onChange={handleChange}
-                    rows={5}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors resize-none"
-                    placeholder="Tell us about your business and how we can help..."
-                  />
-                </div>
-
-                {submitMessage && (
-                  <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
-                    <p className="text-teal-700">{submitMessage}</p>
+              <div className="relative">
+                {isSubmitting && (
+                  <div className="absolute inset-0 z-10 rounded-xl bg-white/60 backdrop-blur-sm flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="h-10 w-10 rounded-full border-4 border-primary-200 border-t-primary-600 animate-spin" />
+                      <p className="text-sm text-gray-700 font-medium">Sending…</p>
+                    </div>
                   </div>
                 )}
 
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isSubmitting ? "Sending..." : "Send Message"}
-                </button>
+                {isSuccess ? (
+                  <div className="card">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <svg className="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-dark-500 mb-1">Message sent</h3>
+                        <p className="text-gray-600 mb-4">
+                          Thanks — we got it. While you wait, you can experience Call Ready in under a minute.
+                        </p>
+                        <Link href="/try-it-now" className="btn-primary inline-flex justify-center">
+                          Go to Try It Now
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmit} className={`space-y-6 ${isSubmitting ? "pointer-events-none" : ""}`}>
+                    <div>
+                      <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                        Your Name *
+                      </label>
+                      <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        required
+                        disabled={isSubmitting}
+                        value={formData.name}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors disabled:opacity-60"
+                        placeholder="John Smith"
+                      />
+                    </div>
 
-                <p className="text-sm text-gray-500 text-center">
-                  We&apos;ll respond within 24 hours
-                </p>
-              </form>
+                    <div>
+                      <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                        Email Address *
+                      </label>
+                      <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        required
+                        disabled={isSubmitting}
+                        value={formData.email}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors disabled:opacity-60"
+                        placeholder="john@example.com"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                        Phone Number *
+                      </label>
+                      <input
+                        type="tel"
+                        id="phone"
+                        name="phone"
+                        required
+                        disabled={isSubmitting}
+                        value={formData.phone}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors disabled:opacity-60"
+                        placeholder="(555) 123-4567"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="orgName" className="block text-sm font-medium text-gray-700 mb-2">
+                        Business / Organization Name
+                      </label>
+                      <input
+                        type="text"
+                        id="orgName"
+                        name="orgName"
+                        disabled={isSubmitting}
+                        value={formData.orgName}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors disabled:opacity-60"
+                        placeholder="Smith Plumbing LLC"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
+                        Message *
+                      </label>
+                      <textarea
+                        id="message"
+                        name="message"
+                        required
+                        disabled={isSubmitting}
+                        value={formData.message}
+                        onChange={handleChange}
+                        rows={5}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors resize-none disabled:opacity-60"
+                        placeholder="Tell us about your business and how we can help..."
+                      />
+                    </div>
+
+                    {submitMessage && (
+                      <div className="bg-rose-50 border border-rose-200 rounded-lg p-4">
+                        <p className="text-rose-700">{submitMessage}</p>
+                      </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Send Message
+                    </button>
+
+                    <p className="text-sm text-gray-500 text-center">We&apos;ll respond within 24 hours</p>
+                  </form>
+                )}
+              </div>
             </div>
 
             {/* Contact Information */}

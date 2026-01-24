@@ -48,3 +48,9 @@
     @apply bg-white rounded-xl p-6 md:p-8 shadow-natural hover:shadow-deep transition-shadow duration-200;
   }
 }
+
+/* Dev-only: Next.js injects <nextjs-portal> for its overlays/tools. */
+nextjs-portal {
+  left: 2px !important;
+  top: 1px !important;
+}
