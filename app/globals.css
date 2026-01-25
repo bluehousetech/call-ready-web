@@ -1,5 +1,10 @@
-@import "tailwindcss";
-@config "../tailwind.config.js";
+@import "tailwindcss" source(none);
+@config "../tailwind.config.ts";
+
+/* Explicitly register sources to avoid scanning non-web files (e.g. .agent). */
+@source "../app";
+@source "../components";
+@source "../pages";
 
 @layer base {
   html {
